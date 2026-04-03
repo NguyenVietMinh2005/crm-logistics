@@ -1,9 +1,14 @@
 const { google } = require('googleapis');
 const path = require('path');
 
+// Kiểm tra xem đang chạy ở máy cá nhân hay trên Render
+const googleCredentials = process.env.GOOGLE_SERVICE_ACCOUNT_JSON 
+  ? JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON) // Nếu có biến môi trường thì dùng
+  : require('./credentials.json'); // Nếu ở máy cá nhân thì vẫn đọc file cũ
+
 const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, '../credentials.json'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  credentials: googleCredentials, // <-- Dùng biến credentials thay vì keyFile
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 const appendDataToSheet = async (data) => {
