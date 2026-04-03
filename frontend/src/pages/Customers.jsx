@@ -14,7 +14,7 @@ function Customers({ type = 'Kho dữ liệu' }) {
   useEffect(() => { 
     const loadInitialData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/customers');
+        const response = await axios.get(`${API_URL}/api/customers`);
         setCustomers(response.data.data);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu", error);
