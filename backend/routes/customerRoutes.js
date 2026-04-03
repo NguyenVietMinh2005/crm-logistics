@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const fs = require('fs'); // Thêm thư viện quản lý file
+const path = require('path'); // Thêm thư viện xử lý đường dẫn
 const { submitCustomerForm, getAllCustomers, updateCustomerStatus, addInteraction } = require('../controllers/customerController');
 
+// --- ĐOẠN CODE MỚI: TỰ ĐỘNG TẠO THƯ MỤC UPLOADS NẾU CHƯA CÓ ---
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log("✅ Đã tạo thư mục uploads thành công!");
+}
+// ---------------------------------------------------------------
 
 // 1. Cấu hình "người vận chuyển" Multer
 const storage = multer.diskStorage({
