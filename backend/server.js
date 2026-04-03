@@ -2,15 +2,17 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-app.use(cors({
-    origin: ['http://localhost:5173', 'https://crm-logistics-zxee.vercel.app'], // Dán link Vercel của bạn vào đây
-    credentials: true
-}));
+
 const connectDB = require('./config/db'); // <-- Import file cấu hình db
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://crm-logistics-zxee.vercel.app'], // Dán link Vercel của bạn vào đây
+    credentials: true
+}));
 // Thực thi hàm kết nối Database
 connectDB(); 
 
