@@ -31,10 +31,13 @@ const appendDataToSheet = async (customerData) => {
         const sheetId = process.env.GOOGLE_SHEET_ID;
         const hs = customerData.hsCodeDetails || {}; // Lấy mớ câu hỏi nghiệp vụ
 
-        // 1. Chuyển mảng đường dẫn file thành một chuỗi văn bản để dễ nhìn trên Sheet
+        // 1. Biến đổi đường dẫn file (VD: 'uploads/1775...-3.docx' thành '3.docx')
         const fileLinks = customerData.attachedFiles && customerData.attachedFiles.length > 0 
-            ? customerData.attachedFiles.join('\n') 
-            : 'Không có file';
+            ? customerData.attachedFiles.map(filePath => {
+                // Tách bỏ phần 'uploads/' và chuỗi thời gian, chỉ lấy tên gốc đằng sau dấu '-' đầu tiên
+                return filePath.split('-').slice(1).join('-');
+            }).join('\n') 
+            : 'Không có file đính kèm';
 
         // 2. Tạo mảng dữ liệu khớp với các cột (Thứ tự từ A đến AL)
         const values = [
