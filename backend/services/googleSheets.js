@@ -32,10 +32,13 @@ const appendDataToSheet = async (customerData) => {
         const hs = customerData.hsCodeDetails || {}; // Lấy mớ câu hỏi nghiệp vụ
 
         // 1. Biến đổi đường dẫn file (VD: 'uploads/1775...-3.docx' thành '3.docx')
+        // Biến đổi đường dẫn thành Link Click được trên web
         const fileLinks = customerData.attachedFiles && customerData.attachedFiles.length > 0 
             ? customerData.attachedFiles.map(filePath => {
-                // Tách bỏ phần 'uploads/' và chuỗi thời gian, chỉ lấy tên gốc đằng sau dấu '-' đầu tiên
-                return filePath.split('-').slice(1).join('-');
+                // Đổi dấu chéo \ thành / (đề phòng lỗi đường dẫn)
+                const cleanPath = filePath.replace(/\\/g, '/');
+                // Nối với tên miền Render của bạn để tạo thành link hoàn chỉnh
+                return `https://crm-logistics.onrender.com/${cleanPath}`;
             }).join('\n') 
             : 'Không có file đính kèm';
 

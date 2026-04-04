@@ -20,6 +20,9 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// Cho phép người ngoài truy cập vào thư mục uploads qua đường link
+app.use('/uploads', express.static('uploads'));
+
 // Thêm 2 dòng này vào dưới chỗ khai báo customerRoutes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
