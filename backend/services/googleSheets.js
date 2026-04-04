@@ -1,21 +1,21 @@
 const { google } = require('googleapis');
+const fs = require('fs');
+const path = require('path');
 
 let googleCredentials;
 
-// Kiểm tra xem đang chạy trên Render hay ở máy
+// Kiểm tra môi trường (Render hoặc Local)
 if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
   try {
     googleCredentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-    console.log("✅ Đã kết nối Google Sheets qua biến môi trường (Render)");
   } catch (err) {
-    console.error("❌ Lỗi định dạng JSON trong biến môi trường:", err.message);
+    console.error("❌ Lỗi JSON credentials:", err.message);
   }
 } else {
   try {
-    googleCredentials = require('../credentials.json'); 
-    console.log("✅ Đã kết nối Google Sheets qua file local");
+    googleCredentials = require('../credentials.json');
   } catch (err) {
-    console.error("⚠️ Không tìm thấy file credentials.json ở máy local. Hãy kiểm tra lại đường dẫn!");
+    console.error("⚠️ Thiếu file credentials.json!");
   }
 }
 
@@ -26,36 +26,72 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
-// --- ĐÂY LÀ HÀM BẠN BỊ THIẾU NÃY GIỜ ---
 const appendDataToSheet = async (customerData) => {
     try {
-        const sheetId = process.env.GOOGLE_SHEET_ID; // Đảm bảo bạn đã điền biến này trên Render
-        
-        // Gắn dữ liệu vào các cột (Từ A đến G)
+        const sheetId = process.env.GOOGLE_SHEET_ID;
+        const hs = customerData.hsCodeDetails || {}; // Lấy mớ câu hỏi nghiệp vụ
+
+        // 1. Chuyển mảng đường dẫn file thành một chuỗi văn bản để dễ nhìn trên Sheet
+        const fileLinks = customerData.attachedFiles && customerData.attachedFiles.length > 0 
+            ? customerData.attachedFiles.join('\n') 
+            : 'Không có file';
+
+        // 2. Tạo mảng dữ liệu khớp với các cột (Thứ tự từ A đến AL)
         const values = [
             [
-                customerData.companyName,
-                customerData.taxCode,
-                customerData.contactPerson,
-                customerData.phone,
-                customerData.email,
-                customerData.serviceType,
-                customerData.notes || ''
+                customerData.companyName,         // Cột A: Tên công ty
+                customerData.taxCode,             // Cột B: MST
+                customerData.contactPerson,       // Cột C: PIC
+                customerData.phone,               // Cột D: SĐT
+                customerData.email,               // Cột E: Email
+                customerData.serviceType,         // Cột F: Dịch vụ
+                customerData.notes || '',         // Cột G: Ghi chú chung
+                hs.hsCode || '',                  // Cột H: Mã HS dự kiến
+                hs.q1_loaiHinhDN || '',           // Cột I: Loại hình DN
+                hs.q2_nhapXuat || '',             // Cột J: Nhập/Xuất
+                hs.q2_maLoaiHinh || '',           // Cột K: Mã loại hình khai báo
+                hs.q2_mucDich || '',              // Cột L: Mục đích XNK
+                hs.q2_ghiChu || '',               // Cột M: Ghi chú loại hình
+                hs.q3_nhomChuyenNganh || '',      // Cột N: Nhóm chuyên ngành
+                hs.q4_phanLoaiQuanLy || '',       // Cột O: Phân loại quản lý
+                hs.q6_tenThuongMai || '',         // Cột P: Tên thương mại
+                hs.q7_tenBanChat || '',           // Cột Q: Tên bản chất kỹ thuật
+                hs.q8_model || '',                // Cột R: Model
+                hs.q9_nhaSanXuat || '',           // Cột S: Nhà sản xuất
+                hs.q10_xuatXu || '',              // Cột T: Xuất xứ
+                hs.q11_vatLieu || '',             // Cột U: Vật liệu
+                hs.q12_thanhPhan || '',           // Cột V: Thành phần
+                hs.q13_honHop || '',              // Cột W: Hỗn hợp/Hóa chất
+                hs.q14_congDung || '',            // Cột X: Công dụng
+                hs.q15_linhVuc || '',             // Cột Y: Lĩnh vực sử dụng
+                hs.q16_chucNang || '',            // Cột Z: Chức năng đặc biệt
+                hs.q17_thongSo || '',             // Cột AA: Thông số (có cân nặng)
+                hs.q18_dien || '',                // Cột AB: Dùng điện?
+                hs.q19_dongGoi || '',             // Cột AC: Hình thức đóng gói
+                hs.q20_donViTinh || '',           // Cột AD: Đơn vị tính
+                hs.q21_kichThuoc || '',           // Cột AE: Kích thước
+                hs.q22_trangThai || '',           // Cột AF: Trạng thái hàng
+                hs.q23_boPhanMay || '',           // Cột AG: Là bộ phận máy?
+                hs.q24_taiLieu || '',             // Cột AH: Ghi chú tài liệu đính kèm
+                hs.q25_luuY || '',                // Cột AI: Lưu ý đặc biệt
+                hs.q26_boSung || '',              // Cột AJ: Thông tin bổ sung
+                fileLinks,                        // Cột AK: DANH SÁCH FILE ĐÍNH KÈM
+                new Date().toLocaleString('vi-VN') // Cột AL: Thời gian gửi
             ]
         ];
 
+        // 3. Gửi lên Google Sheet (Mở rộng vùng range đến cột AL)
         await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: 'Sheet1!A:G', // CHÚ Ý: Đổi chữ 'Sheet1' thành đúng tên trang tính (tab) của bạn ở dưới đáy file Google Sheet
+            range: 'Data!A:AL', // Đảm bảo tab tên là 'Data'
             valueInputOption: 'USER_ENTERED',
             resource: { values },
         });
-        console.log("✅ Đã bắn dữ liệu thành công lên Google Sheets!");
+        console.log("✅ Toàn bộ hồ sơ và file đã lên Google Sheets!");
     } catch (error) {
-        console.error("❌ Lỗi khi ghi lên Google Sheets:", error);
+        console.error("❌ Lỗi Google Sheets:", error);
         throw error;
     }
 };
 
-// Xuất khẩu chung cả 2 món ra ngoài cho controller xài
 module.exports = { sheets, appendDataToSheet };
