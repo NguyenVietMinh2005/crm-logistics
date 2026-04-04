@@ -190,7 +190,7 @@ function FormPage() {
               </div>
             )}
 
-            <label style={{marginTop:'15px', display:'block'}}><b>📎 Tải Lên Chứng Từ {matchedRisk ? <span style={{color: 'red'}}>(BẮT BUỘC)</span> : ''}</b></label>
+            <label style={{marginTop:'15px', display:'block'}}><b>📎 Tải lên chứng từ (MSDS/hun trùng/kiểm nghiệm hợp quy) {matchedRisk ? <span style={{color: 'red'}}>(BẮT BUỘC)</span> : ''}</b></label>
             <input type="file" multiple onChange={handleFileChange} style={{...inputStyle, padding: '10px', backgroundColor: '#fff'}} required={!!matchedRisk} />
           </div>
 
